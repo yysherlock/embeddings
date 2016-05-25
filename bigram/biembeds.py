@@ -226,7 +226,7 @@ DEBUG = True
 if DEBUG:
     opt = {'learning_rate':0.1, \
         'weight_decay': 1e-3, \
-        'tolerance': 0.2, \
+        'tolerance': 0.1, \
         'batch_size': 100, \
         'maxecho': 2000, \
         'lambda': 1e-3 }

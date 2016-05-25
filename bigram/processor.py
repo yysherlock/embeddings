@@ -88,7 +88,6 @@ class Processor(object):
             pickle.dump(self.dataidxs, dataf)
 
     def transform_data(self,pairidxs,causality): # pairidxs: a list of pairidx
-        # {pairidx:[causewordId, effectwordId]}
         # transform context/outside word as input
         # transform target/center word as label
         batch_size = len(pairidxs)
@@ -102,8 +101,8 @@ class Processor(object):
         for i in xrange(batch_size):
             context_word_id = self.idxpairmap[pairidxs[i]][contextIdx]
             target_word_id = self.idxpairmap[pairidxs[i]][targetIdx]
-            input_data[i,context_word_id] = 1
-            label_data[i,target_word_id] = 1
+            input_data[i,context_word_id] = 1.0
+            label_data[i,target_word_id] = 1.0
 
         return (input_data, label_data)
 
@@ -111,11 +110,16 @@ class Processor(object):
 class TestProcessor(unittest.TestCase):
 
     def setUp(self):
-        self.processor = Processor('bi-config.ini','DEBUG')
-        #self.processor = Processor('bi-config.ini', 'COPA')
+        #self.processor = Processor('bi-config.ini','DEBUG')
+        self.processor = Processor('bi-config.ini', 'COPA')
     def test_loadBigramData(self):
         obj = self.processor
         self.assertEqual(obj.loadedOrNot(), True)
+    def test_transform_data(self):
+        pairidxs = [1,2]
+        input_data, label_data = self.processor.transform_data(pairidxs,'nec')
+        print(input_data)
+        print(label_data)
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,13 +18,17 @@ with open('../biembeds.pickle','rb') as f:
 #print(biembeds[0].T)
 la = np.linalg
 N = len(biembeds); d = biembeds[0].shape[0]
+# centered
+biembeds -= np.mean(biembeds)
+
 X = np.empty([N,d])
 
 # generate selected_list
 wordmap = {}
 for i in xrange(len(wordlist)):
     wordmap[wordlist[i]] = i
-selected_words = ['happy_c','enjoy_e','fire_c','fire_e','death_e','death_c','flood_c','flood_e','damage_c','damage_e','stress_e','smoke_c','smoke_e','hospital_c','hospital_e']
+#selected_words = ['happy_c','enjoy_e','fire_c','fire_e','death_e','death_c','flood_c','flood_e','damage_c','damage_e','stress_e','smoke_c','smoke_e','hospital_c','hospital_e']
+selected_words = ['fire_c','guilty_e','property_e','gift_c','kill_c','happy_e','flood_c','damage_e']
 selected_list = [wordmap[word] for word in selected_words]
 
 for i in xrange(N): #
@@ -44,5 +48,6 @@ print('max:', U_[idxmapping(np.argmax(U_), N, 2)])
 for i in selected_list:
     plt.text(U[i,0], U[i,1], wordlist[i])
 
-plt.axis([-0.04, 0.04, -0.05, 0.04])
+plt.axis([-0.01, 0.01, -0.02, 0.04])
+#plt.axis([-0.05,0.05,-0.05,0.05]) # uncentered
 plt.show()
