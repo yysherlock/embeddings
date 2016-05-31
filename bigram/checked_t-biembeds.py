@@ -163,8 +163,20 @@ class BigramEmbed(object):
             if expectend <= data_size: batch_idx_list = train_idx_list[start : expectend]
             else: batch_idx_list = train_idx_list[start : data_size] + train_idx_list[0 : expectend - data_size]
 
+            _wgradients, _bgradients = self.org_mini_batch(batch_idx_list)
             wgradients, bgradients = self.mini_batch(batch_idx_list)
 
+            print(np.allclose(wgradients[0],_wgradients[0]))
+            print('wgradients[0][1]:',wgradients[0][1])
+            print('_wgradients[0][1]:',_wgradients[0][1])
+            time.sleep(5)
+
+            print(np.allclose(wgradients[1], _wgradients[1]))
+            print(np.allclose(bgradients[0],_bgradients[0]))
+            print(np.allclose(bgradients[1], _bgradients[1]))
+
+            print('======')
+            time.sleep(3)
             start = expectend % data_size
             # batch_data: context vectors, batch_label: target vectors
 
@@ -179,6 +191,57 @@ class BigramEmbed(object):
             print('iteration: ',iteration)
 
         #print('weights:',self.weights,'biases:',self.biases)
+
+    def applygradient(self, train_data, train_label):
+        """ calculate wgradients, bgradients for all layers (L-1 ~ 0)
+        d: represents dJ/dz at lth layer
+        At current layer:
+            a0 -- z1 -- a1
+        """
+        wgradients = []
+        bgradients = []
+        # generate outputs for each layer, i.e. ai for each layer i
+        a0 = train_data # (v,1)
+        outputs = [a0] # output[i] represents ai, i range from 0 to L
+        for idx in xrange(self.L):
+            weight = self.weights[idx] # weight: h x v
+            bias = self.biases[idx] # bias: h x 1
+            a0 = feedforward(a0, weight, bias) # h x 1
+            outputs.append(a0)
+
+        # d: h x 1
+        d = - outputs[self.L] * (1-outputs[self.L]) * (train_label-outputs[self.L]) # at layer L, initial, 10 x 1
+        for l in xrange(self.L-1,-1,-1): # L-1 ~ 0
+            # calculate gradient at layer l, l range from L-1 to 0
+            # at layer l, current d is at l+1
+            a0 = outputs[l]
+            a1 = outputs[l+1]
+            wgradient = np.dot(d,a0.T) \
+                + self.lambda_*self.weights[l]# h x 1,1 x v -> h x v
+            bgradient = d # h x 1
+            wgradients = [wgradient] + wgradients
+            bgradients = [bgradient] + bgradients
+
+            # update d for next layer, i.e. layer l-1
+            d = np.dot(self.weights[l].T,d) * (a0*(1-a0)) # d at layer l
+
+        return (wgradients, bgradients)
+
+    def org_mini_batch(self, batch_idx_list):
+        batch_data, batch_label = self.processor.transform_data(batch_idx_list,'nec')
+        sz = batch_label.shape[0] # number of batch examples
+
+        avg_wgradients = [np.zeros(weight.shape) for weight in self.weights]
+        avg_bgradients = [np.zeros(bias.shape) for bias in self.biases]
+
+        for i in xrange(sz):
+            data = batch_data[i][np.newaxis].T # ith row, v x 1
+            label = batch_label[i][np.newaxis].T
+            wgradients, bgradients = self.applygradient(data, label)
+            avg_wgradients = add_list_org(avg_wgradients, wgradients, float(sz))
+            avg_bgradients = add_list_org(avg_bgradients, bgradients, float(sz))
+
+        return (avg_wgradients, avg_bgradients)
 
     def mini_batch(self, batch_idx_list):
         # set weights and biases for Worker class
@@ -206,6 +269,24 @@ class BigramEmbed(object):
         for idx in xrange(self.L):
             self.weights[idx] -= self.learning_rate * wgradients[idx]
             self.biases[idx] -= self.learning_rate * bgradients[idx]
+
+    def computeNumericGradient(self, input, label, theta, epsilon=1e-4, sampleNum = 10):
+        """ theta: w or b
+        """
+        h,v = theta.shape
+        sample = np.random.randint(0, h*v, sampleNum)
+        grad = np.zeros(sampleNum)
+
+        for i,idx in enumerate(sample):
+            # change theta
+            theta[idxmapping(idx,h,v)] += epsilon
+            c1 = self.getCost(input, label)
+            theta[idxmapping(idx,h,v)] -= 2*epsilon
+            c2 = self.getCost(input, label)
+            grad[i] = (c1 - c2) / (2*epsilon)
+            theta[idxmapping(idx,h,v)] += epsilon
+
+        return grad, sample
 
     def cost(self, output, label):
         return 0.5 * np.sum((output - label)**2) \
