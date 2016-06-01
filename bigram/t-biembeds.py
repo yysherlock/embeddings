@@ -15,7 +15,7 @@ from copy import deepcopy
 3. workers: work thread, creating by Worker()
 """
 
-processor = Processor('bi-config.ini','DEBUG')
+processor = Processor('bi-config.ini','COPA')
 
 ########### Util functions #############
 def sigmoid(z):
@@ -51,7 +51,7 @@ class Opt(object):
     L = 2
     weight_decay = 1e-3
     tolerance = 0.1
-    batch_size = 1000
+    batch_size = 10000
     maxecho = 2000
     lambda_ = 1e-3
     thread_count = 4

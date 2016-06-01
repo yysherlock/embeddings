@@ -93,10 +93,30 @@ class BigramEmbed(object):
             data = batch_data[i][np.newaxis].T # ith row, v x 1
             label = batch_label[i][np.newaxis].T
             wgradients, bgradients = self.applygradient(data, label)
+            # gradient check
+            layer = 1
+            self.gradient_check(data, label, wgradients[layer], bgradients[layer], layer)
+
             avg_wgradients = add_list(avg_wgradients, wgradients, float(sz))
             avg_bgradients = add_list(avg_bgradients, bgradients, float(sz))
 
         return (avg_wgradients, avg_bgradients)
+
+    def gradient_check(self, sampled_data, sampled_label, wgradient, bgradient, layer = 1):
+        # gradient check
+        numeric_wgradient, wsample = self.computeNumericGradient(sampled_data.T, sampled_label.T, self.weights[layer])
+        numeric_bgradient, bsample = self.computeNumericGradient(sampled_data.T, sampled_label.T, self.biases[layer])
+        for x,ws in enumerate(wsample):
+            index = idxmapping(ws, *self.weights[layer].shape)
+            close = np.isclose(wgradient[index], numeric_wgradient[x])
+            diffw = np.linalg.norm(wgradient[index] - numeric_wgradient[x])
+            print('diffw:', diffw, close)
+
+        for x,bs in enumerate(bsample):
+            index = idxmapping(bs, *self.biases[layer].shape)
+            close = np.isclose(bgradient[index], numeric_bgradient[x])
+            diffb = np.linalg.norm(bgradient[index] - numeric_bgradient[x])
+            print('diffb:', diffb, close)
 
 
     def update(self, wgradients, bgradients, iteration = None):
@@ -105,6 +125,24 @@ class BigramEmbed(object):
         for idx in xrange(self.L):
             self.weights[idx] -= self.learning_rate * wgradients[idx]
             self.biases[idx] -= self.learning_rate * bgradients[idx]
+
+    def computeNumericGradient(self, input, label, theta, epsilon=1e-4, sampleNum = 10):
+        """ theta: w or b
+        """
+        h,v = theta.shape
+        sample = np.random.randint(0, h*v, sampleNum)
+        grad = np.zeros(sampleNum)
+
+        for i,idx in enumerate(sample):
+            # change theta
+            theta[idxmapping(idx,h,v)] += epsilon
+            c1 = self.getCost(input, label)
+            theta[idxmapping(idx,h,v)] -= 2*epsilon
+            c2 = self.getCost(input, label)
+            grad[i] = (c1 - c2) / (2*epsilon)
+            theta[idxmapping(idx,h,v)] += epsilon
+
+        return grad, sample
 
     def applygradient(self, train_data, train_label):
         """ calculate wgradients, bgradients for all layers (L-1 ~ 0)
@@ -124,7 +162,17 @@ class BigramEmbed(object):
             outputs.append(a0)
 
         # d: h x 1
-        d = - outputs[self.L] * (1-outputs[self.L]) * (train_label-outputs[self.L]) # at layer L, initial, 10 x 1
+        # d = - outputs[self.L] * (1-outputs[self.L]) * (train_label-outputs[self.L]) # at layer L, initial, 10 x 1
+        d = outputs[self.L] - train_label
+#return 0.5 * np.sum((output - label)**2) \ # for quadratic cost function, output N x 50
+
+        # for cross entropy cost function, label N x 50
+        return - np.sum(np.log(output) * label) \
+            + 0.5 * self.lambda_ * sum([np.sum(weight**2) for weight in self.weights])
+        # influence: 1) dJ/dW, J has an additional term lambda/2 * (||W1||+||W2||+...+||WL||)
+                    # we should add a term on its gradient dJ/dW, for Wl, its:
+                    # lambda * Wl
+                    #2)
         for l in xrange(self.L-1,-1,-1): # L-1 ~ 0
             # calculate gradient at layer l, l range from L-1 to 0
             # at layer l, current d is at l+1
@@ -185,8 +233,15 @@ class BigramEmbed(object):
 
 
     def cost(self, output, label):
-        return 0.5 * np.sum((output - label)**2) \
-            + 0.5 * self.lambda_ * sum([np.sum(weight**2) for weight in self.weights])
+        # When use quadratic cost function
+        # return 0.5 * np.sum((output - label)**2)
+
+        # When top layer is softmax layer:
+        # return np.sum(np.nan_to_num(-np.log(output) * label))
+
+        # When top layer is sigmoid layer
+        return np.sum(-label*np.log(output) - (1-label)*np.log(1-output)) \
+        + 0.5 * self.lambda_ * sum([np.sum(weight**2) for weight in self.weights])
         # influence: 1) dJ/dW, J has an additional term lambda/2 * (||W1||+||W2||+...+||WL||)
                     # we should add a term on its gradient dJ/dW, for Wl, its:
                     # lambda * Wl
@@ -198,7 +253,8 @@ class BigramEmbed(object):
             weight = self.weights[idx] # weight: h x v
             bias = self.biases[idx] # bias: h x 1
             input_data = self.feedforward_all(input_data, weight, bias) # N x h
-        output = softmax(input_data) # N x v
+        #output = softmax(input_data) # N x v
+        output = input_data
         return output
 
     def getCost(self, input_data, label): # for a mini batch
