@@ -220,7 +220,8 @@ class BigramEmbed(object):
             weight = self.weights[idx] # weight: h x v
             bias = self.biases[idx] # bias: h x 1
             input_data = self.feedforward_all(input_data, weight, bias) # N x h
-        output = softmax(input_data) # N x v
+        #output = softmax(input_data) # N x v
+        output = input_data
         return output
 
     def getCost(self, input_data, label): # for a mini batch
