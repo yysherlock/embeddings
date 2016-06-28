@@ -211,7 +211,7 @@ def main():
     for section in config.sections():
         if section=="CS_0.5": continue
         print("datasets:",section)
-        processor = Causal(configPath, section)
+        #processor = Causal(configPath, section)
 
 
 
