@@ -47,9 +47,9 @@ class Causal(object):
         if not self.effectprior:
             self.effectprior = self.loadObj(self.effectpriorfn)
         if not self.causedict:
-            self.causedict = self.loadObj(self.causedict)
+            self.causedict = self.loadObj(self.causedictfn)
         if not self.effectdict:
-            self.effectdict = self.loadObj(self.effectdict)
+            self.effectdict = self.loadObj(self.effectdictfn)
 
         self.volcab_size = len(self.idwordlist)
 
@@ -85,11 +85,16 @@ class Causal(object):
                     print("line:", curIdx)
 
                 cause,effect,freq = line.strip().split('\t')
-                freq = int(freq)
+
+                try:
+                    freq = int(freq)
+                except:
+                    freq = max(10, int(np.log2(1 + float(freq)*100)))
+
                 cause += '_c'; effect += '_e'
-                volcab.add(cause); volcab.add(effect)
 
                 if cause not in volcab:
+                    volcab.add(cause)
                     #idOfwordf.write(str(curId) + ' ' + cause + '\n')
                     self.idwordlist.append(cause)
                     causeId = curId
@@ -104,6 +109,7 @@ class Causal(object):
                 self.causedict[cause][effect] = freq
 
                 if effect not in volcab:
+                    volcab.add(effect)
                     #idOfwordf.write(str(curId) + ' ' + effect + '\n')
                     self.idwordlist.append(effect)
                     effectId = curId
@@ -131,7 +137,7 @@ class Causal(object):
             for effect in self.effectdict.keys():
                 effecttot = self.effectprior[self.tokens[effect]]
                 for cause in self.effectdict[effect]:
-                    self.causedict[effect][cause] /= effecttot
+                    self.effectdict[effect][cause] /= effecttot
 
             self.causeprior = list(np.array(self.causeprior) / tot)
             self.effectprior = list(np.array(self.effectprior) / tot)
