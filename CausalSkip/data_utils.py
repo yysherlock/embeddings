@@ -74,7 +74,8 @@ class Causal(object):
         # construct indexOfpair map, and idOfword map
         with open(self.corpusfn) as f, open(self.idwordlistfn,'wb') as idwordlistf, \
                 open(self.idxpairmapfn,'wb') as idxOfpairf, open(self.pairlistfn,'wb') as dataf, \
-                open(self.causepriorfn,'wb') as causepriorf, open(self.effectpriorfn,'wb') as effectpriorf:
+                open(self.causepriorfn,'wb') as causepriorf, open(self.effectpriorfn,'wb') as effectpriorf, \
+                open(self.causedictfn,'wb') as causedictf, open(self.effectdictfn,'wb') as effectdictf:
 
             causeId, effectId, tot = 0,0,0
             
@@ -86,11 +87,10 @@ class Causal(object):
                 cause,effect,freq = line.strip().split('\t')
                 freq = int(freq)
                 cause += '_c'; effect += '_e'
+                volcab.add(cause); volcab.add(effect)
+
                 if cause not in volcab:
-                    volcab.add(cause)
                     #idOfwordf.write(str(curId) + ' ' + cause + '\n')
-                    self.causedict.setdefault(cause,{})
-                    self.causedict[cause][effect] = freq
                     self.idwordlist.append(cause)
                     causeId = curId
                     self.tokens[cause] = curId
@@ -99,12 +99,12 @@ class Causal(object):
                     curId += 1
                 else:
                     self.causeprior[self.tokens[cause]] += freq
+                
+                self.causedict.setdefault(cause,{})
+                self.causedict[cause][effect] = freq
 
                 if effect not in volcab:
-                    volcab.add(effect)
                     #idOfwordf.write(str(curId) + ' ' + effect + '\n')
-                    self.effectdict.setdefault(effect,{})
-                    self.effectdict[effect][cause] = freq
                     self.idwordlist.append(effect)
                     effectId = curId
                     self.tokens[effect] = curId
@@ -113,6 +113,9 @@ class Causal(object):
                     curId += 1
                 else:
                     self.effectprior[self.tokens[effect]] += freq
+                
+                self.effectdict.setdefault(effect,{})
+                self.effectdict[effect][cause] = freq
 
                 tot += freq
                 for i in range(freq): self.dataidxs.append(curIdx)
