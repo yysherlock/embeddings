@@ -77,14 +77,19 @@ class Causal(object):
                 open(self.causepriorfn,'wb') as causepriorf, open(self.effectpriorfn,'wb') as effectpriorf:
 
             causeId, effectId, tot = 0,0,0
+            
             for line in f:
+
+                if not curIdx % 10000:
+                    print("line:", curIdx)
+
                 cause,effect,freq = line.strip().split('\t')
                 freq = int(freq)
                 cause += '_c'; effect += '_e'
                 if cause not in volcab:
                     volcab.add(cause)
                     #idOfwordf.write(str(curId) + ' ' + cause + '\n')
-                    self.causedict.setdefaut(cause,{})
+                    self.causedict.setdefault(cause,{})
                     self.causedict[cause][effect] = freq
                     self.idwordlist.append(cause)
                     causeId = curId
@@ -98,7 +103,7 @@ class Causal(object):
                 if effect not in volcab:
                     volcab.add(effect)
                     #idOfwordf.write(str(curId) + ' ' + effect + '\n')
-                    self.effectdict.setdefaut(effect,{})
+                    self.effectdict.setdefault(effect,{})
                     self.effectdict[effect][cause] = freq
                     self.idwordlist.append(effect)
                     effectId = curId
@@ -195,6 +200,7 @@ def main():
     config.read(configPath)
 
     for section in config.sections():
+        print("datasets:",section)
         processor = Causal(configPath, section)
 
 
