@@ -78,7 +78,7 @@ class Causal(object):
                 open(self.causedictfn,'wb') as causedictf, open(self.effectdictfn,'wb') as effectdictf:
 
             causeId, effectId, tot = 0,0,0
-            
+
             for line in f:
 
                 if not curIdx % 10000:
@@ -104,7 +104,7 @@ class Causal(object):
                     curId += 1
                 else:
                     self.causeprior[self.tokens[cause]] += freq
-                
+
                 self.causedict.setdefault(cause,{})
                 self.causedict[cause][effect] = freq
 
@@ -119,7 +119,7 @@ class Causal(object):
                     curId += 1
                 else:
                     self.effectprior[self.tokens[effect]] += freq
-                
+
                 self.effectdict.setdefault(effect,{})
                 self.effectdict[effect][cause] = freq
 
@@ -209,6 +209,7 @@ def main():
     config.read(configPath)
 
     for section in config.sections():
+        if section=="CS_0.5": continue
         print("datasets:",section)
         processor = Causal(configPath, section)
 
