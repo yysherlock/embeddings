@@ -1,6 +1,7 @@
 import numpy as np
+import configparser
 import random
-
+ from data_utils import *
 from model_utils import softmax, sigmoid, sigmoid_grad, gradcheck_naive
 
 def normalizeRows(x):
@@ -32,6 +33,7 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
 
     UK = np.zeros((K+1, D))
     indices = [target]
+    tablesize = W
     for i in xrange(K):
         k = dataset.sampleTokenIdx()
         while k == target:
@@ -54,7 +56,7 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
 
 
 def cskipgram(currentWord, C, contextWords, inputVectors, outputVectors,
-    dataset, word2vecCostAndGradient = softmaxCostAndGradient):
+    dataset, word2vecCostAndGradient = negSamplingCostAndGradient):
     """ Skip-gram model in word2vec """
 
     # Implement the skip-gram model in this function.
@@ -106,11 +108,11 @@ def cskipgram(currentWord, C, contextWords, inputVectors, outputVectors,
 
     return cost, gradIn, gradOut
 
-def word2vec_sgd_wrapper(word2vecModel, tokens, wordVectors, dataset, C, word2vecCostAndGradient = negSamplingCostAndGradient):
+def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAndGradient = negSamplingCostAndGradient):
     batchsize = 50
     cost = 0.0
     grad = np.zeros(wordVectors.shape)
-    N = len(dataset.cause_prior)
+    N = len(dataset.causeprior)
     causeVectors = wordVectors[:N,:]
     effectVectors = wordVectors[N:,:]
 
@@ -145,14 +147,17 @@ def test_model():
 
     random.seed(31415)
     np.random.seed(9265)
-    
-    dataset = Causal(configPath, section)
+
+    dataset = Causal(configPath, "CausalNet")
     dimVectors = 10
 
-    causenWords = len(dataset.cause_prior)
-    effectnWords = len(dataset.effect_prior)
+    causenWords = len(dataset.causeprior)
+    effectnWords = len(dataset.effectprior)
 
     wordVectors = np.concatenate(((np.random.rand(causenWords, dimVectors) - .5) / \
         dimVectors, np.zeros((effectnWords, dimVectors))), axis=0)
 
-    gradcheck_naive(lambda vec: word2vec_sgd_wrapper(skipgram, vec, dataset, 5, negSamplingCostAndGradient), wordVectors)
+    gradcheck_naive(lambda vec: word2vec_sgd_wrapper(cskipgram, vec, dataset, 5, negSamplingCostAndGradient), wordVectors)
+
+if __name__=="__main__":
+    test_model()
