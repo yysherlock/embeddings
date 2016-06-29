@@ -136,7 +136,12 @@ class Causal(object):
                     self.effectdict[effect][cause] /= effecttot
 
             self.causeprior = list(np.array(self.causeprior) / tot)
+            tmp = np.array(self.causeprior)**0.75
+            self.causeprior = list(tmp/np.sum(tmp))
+
             self.effectprior = list(np.array(self.effectprior) / tot)
+            tmp = np.array(self.effectprior)**0.75
+            self.effectprior = list(tmp/np.sum(tmp))
 
             pickle.dump(self.causeprior, causepriorf)
             pickle.dump(self.effectprior, effectpriorf)
