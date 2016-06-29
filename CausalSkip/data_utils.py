@@ -126,7 +126,8 @@ class Causal(object):
             # combine tokens
             self.effect_offset = len(causetokens)
             for k in effecttokens.keys(): effecttokens[k] += self.effect_offset
-            self.tokens = causetokens.update(effecttokens)
+            self.tokens = causetokens
+            self.tokens.update(effecttokens)
             pickle.dump(self.tokens, tokensf)
 
             # combine idwordlist
@@ -138,7 +139,7 @@ class Causal(object):
                 for effect in self.causedict[cause]:
                     self.causedict[cause][effect] /= causetot
             for effect in self.effectdict.keys():
-                effecttot = self.effectprior[self.tokens[effect]]
+                effecttot = self.effectprior[self.tokens[effect] - self.effectoffset]
                 for cause in self.effectdict[effect]:
                     self.effectdict[effect][cause] /= effecttot
             pickle.dump(self.causedict, causedictf)
