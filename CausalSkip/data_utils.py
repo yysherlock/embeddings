@@ -159,7 +159,7 @@ class Causal(object):
 
 
 
-    def getRandomContext(self, lambd=0.5, C=5):
+    def getRandomContext(self, C=5, lambd=0.5):
 
         # sample a cause or effect word as center word
         center = np.random.choice(np.array(["cause","effect"]), p=[1.0 - lambd, lambd])

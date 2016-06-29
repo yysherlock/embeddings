@@ -1,7 +1,7 @@
 import numpy as np
 import configparser
 import random
- from data_utils import *
+from data_utils import *
 from model_utils import softmax, sigmoid, sigmoid_grad, gradcheck_naive
 
 def normalizeRows(x):
