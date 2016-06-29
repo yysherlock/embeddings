@@ -21,6 +21,7 @@ class Causal(object):
         self.effectpriorfn = self.config.get(sectionflag, 'effect_prior')
         self.causedictfn = self.config.get(sectionflag, 'cause_dict') # {cause1:{effect1:p1,effect2:p2,...}, ...}
         self.effectdictfn = self.config.get(sectionflag, 'effect_dict')
+        self.tokensfn = self.config.get(sectionflag, 'tokens')
 
         self.idwordlist = [] # [word1, word2, ...]
         self.tokens = {} # {w1:idx1, w2:idx2, ...}
@@ -42,6 +43,8 @@ class Causal(object):
             self.causedict = self.loadObj(self.causedictfn)
         if not self.effectdict:
             self.effectdict = self.loadObj(self.effectdictfn)
+        if not self.tokens:
+            self.tokens = self.loadObj(self.tokensfn)
 
         self.volcab_size = len(self.idwordlist)
 
@@ -56,7 +59,8 @@ class Causal(object):
     def loadedOrNot(self):
         return os.path.exists(self.corpusfn) and os.path.exists(self.idwordlistfn) and \
         os.path.exists(self.causepriorfn) and os.path.exists(self.effectpriorfn) and \
-        os.path.exists(self.causedictfn) and os.path.exists(self.effectdictfn)
+        os.path.exists(self.causedictfn) and os.path.exists(self.effectdictfn) and \
+        os.path.exists(self.tokensfn)
 
     def loadDatasets(self):
         """ Read and shuffle bigrams into list, map words into ids,
@@ -67,8 +71,9 @@ class Causal(object):
 
         # construct indexOfpair map, and idOfword map
         with open(self.corpusfn) as f, open(self.idwordlistfn,'wb') as idwordlistf, \
-                open(self.causepriorfn,'wb') as causepriorf, open(self.effectpriorfn,'wb') as effectpriorf:#, \
-            #    open(self.causedictfn,'wb') as causedictf, open(self.effectdictfn,'wb') as effectdictf:
+                open(self.causepriorfn,'wb') as causepriorf, open(self.effectpriorfn,'wb') as effectpriorf, \
+                open(self.causedictfn,'wb') as causedictf, open(self.effectdictfn,'wb') as effectdictf, \
+                open(self.tokensfn, 'wb') as tokensf:
 
             causeId, effectId, tot = 0,0,0
             causewords, effectwords = [], []
@@ -98,8 +103,8 @@ class Causal(object):
                 else:
                     self.causeprior[causetokens[cause]] += freq
 
-                #self.causedict.setdefault(cause,{})
-                #self.causedict[cause][effect] = freq
+                self.causedict.setdefault(cause,{})
+                self.causedict[cause][effect] = freq
 
                 if effect not in volcab:
                     volcab.add(effect)
@@ -111,8 +116,8 @@ class Causal(object):
                 else:
                     self.effectprior[effecttokens[effect]] += freq
 
-                #self.effectdict.setdefault(effect,{})
-                #self.effectdict[effect][cause] = freq
+                self.effectdict.setdefault(effect,{})
+                self.effectdict[effect][cause] = freq
 
                 tot += freq
                 curIdx += 1 # line number is the pair number
@@ -122,9 +127,11 @@ class Causal(object):
             self.effect_offset = len(causetokens)
             for k in effecttokens.keys(): effecttokens[k] += self.effect_offset
             self.tokens = causetokens.update(effecttokens)
+            pickle.dump(self.tokens, tokensf)
 
             # combine idwordlist
             self.idwordlist = causewords + effectwords
+            pickle.dump(self.idwordlist, idwordlistf)
 
             for cause in self.causedict.keys():
                 causetot = self.causeprior[self.tokens[cause]]
@@ -134,6 +141,8 @@ class Causal(object):
                 effecttot = self.effectprior[self.tokens[effect]]
                 for cause in self.effectdict[effect]:
                     self.effectdict[effect][cause] /= effecttot
+            pickle.dump(self.causedict, causedictf)
+            pickle.dump(self.effectdict, effectdictf)
 
             self.causeprior = list(np.array(self.causeprior) / tot)
             tmp = np.array(self.causeprior)**0.75
@@ -146,8 +155,7 @@ class Causal(object):
             pickle.dump(self.causeprior, causepriorf)
             pickle.dump(self.effectprior, effectpriorf)
 
-            pickle.dump(self.causedict, causedictf)
-            pickle.dump(self.effectdict, effectdictf)
+
 
 
     def getRandomContext(self, lambd=0.5, C=5):
@@ -187,8 +195,9 @@ def main():
     config.read(configPath)
 
     for section in config.sections():
-        print("datasets:",section)
-        processor = Causal(configPath, section)
+        if section=="CausalNet":
+            print("datasets:",section)
+            processor = Causal(configPath, section)
 
 
 
