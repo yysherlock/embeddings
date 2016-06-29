@@ -17,17 +17,13 @@ class Causal(object):
         self.corpusfn = self.config.get(sectionflag, 'corpus')
         self.idwordlistfn = self.config.get(sectionflag, 'id2word_list')
         self.tokensfn = self.config.get(sectionflag, 'tokens')
-        self.idxpairmapfn = self.config.get(sectionflag, 'idx2pair_map')
-        self.pairlistfn = self.config.get(sectionflag, 'pairidx_list')
         self.causepriorfn = self.config.get(sectionflag, 'cause_prior')
         self.effectpriorfn = self.config.get(sectionflag, 'effect_prior')
         self.causedictfn = self.config.get(sectionflag, 'cause_dict') # {cause1:{effect1:p1,effect2:p2,...}, ...}
         self.effectdictfn = self.config.get(sectionflag, 'effect_dict')
 
-        self.dataidxs = []
         self.idwordlist = [] # [word1, word2, ...]
         self.tokens = {} # {w1:idx1, w2:idx2, ...}
-        self.idxpairmap = {} # {pairidx:[causewordId, effectwordId]}
         self.causeprior = []
         self.effectprior = []
         self.causedict = {}
@@ -36,12 +32,8 @@ class Causal(object):
         if not self.loadedOrNot():
             self.loadDatasets()
 
-        if not self.dataidxs:
-            self.dataidxs = self.loadObj(self.pairlistfn)
         if not self.idwordlist:
             self.idwordlist = self.loadObj(self.idwordlistfn)
-        if not self.idxpairmap:
-            self.idxpairmap = self.loadObj(self.idxpairmapfn)
         if not self.causeprior:
             self.causeprior = self.loadObj(self.causepriorfn)
         if not self.effectprior:
@@ -53,14 +45,16 @@ class Causal(object):
 
         self.volcab_size = len(self.idwordlist)
 
+        self.cause_offset = 0
+        self.effect_offset = len(self.causeprior)
+
     def loadObj(self, filename):
         with open(filename,'rb') as f:
             obj = pickle.load(f)
         return obj
 
     def loadedOrNot(self):
-        return os.path.exists(self.pairlistfn) and os.path.exists(self.corpusfn) and \
-        os.path.exists(self.idwordlistfn) and os.path.exists(self.idxpairmapfn) and \
+        return os.path.exists(self.corpusfn) and os.path.exists(self.idwordlistfn) and \
         os.path.exists(self.causepriorfn) and os.path.exists(self.effectpriorfn) and \
         os.path.exists(self.causedictfn) and os.path.exists(self.effectdictfn)
 
@@ -73,11 +67,12 @@ class Causal(object):
 
         # construct indexOfpair map, and idOfword map
         with open(self.corpusfn) as f, open(self.idwordlistfn,'wb') as idwordlistf, \
-                open(self.idxpairmapfn,'wb') as idxOfpairf, open(self.pairlistfn,'wb') as dataf, \
-                open(self.causepriorfn,'wb') as causepriorf, open(self.effectpriorfn,'wb') as effectpriorf, \
-                open(self.causedictfn,'wb') as causedictf, open(self.effectdictfn,'wb') as effectdictf:
+                open(self.causepriorfn,'wb') as causepriorf, open(self.effectpriorfn,'wb') as effectpriorf:#, \
+            #    open(self.causedictfn,'wb') as causedictf, open(self.effectdictfn,'wb') as effectdictf:
 
             causeId, effectId, tot = 0,0,0
+            causewords, effectwords = [], []
+            causetokens, effecttokens = {}, {}
 
             for line in f:
 
@@ -95,41 +90,42 @@ class Causal(object):
 
                 if cause not in volcab:
                     volcab.add(cause)
-                    #idOfwordf.write(str(curId) + ' ' + cause + '\n')
-                    self.idwordlist.append(cause)
-                    causeId = curId
-                    self.tokens[cause] = curId
+                    causewords.append(cause)
+                    causetokens[cause] = causeId
+                    causeId += 1
                     self.causeprior.append(freq)
-                    self.effectprior.append(0)
-                    curId += 1
-                else:
-                    self.causeprior[self.tokens[cause]] += freq
 
-                self.causedict.setdefault(cause,{})
-                self.causedict[cause][effect] = freq
+                else:
+                    self.causeprior[causetokens[cause]] += freq
+
+                #self.causedict.setdefault(cause,{})
+                #self.causedict[cause][effect] = freq
 
                 if effect not in volcab:
                     volcab.add(effect)
-                    #idOfwordf.write(str(curId) + ' ' + effect + '\n')
-                    self.idwordlist.append(effect)
-                    effectId = curId
-                    self.tokens[effect] = curId
+                    effectwords.append(effect)
+                    effecttokens[effect] = effectId
+                    effectId += 1
                     self.effectprior.append(freq)
-                    self.causeprior.append(0)
-                    curId += 1
-                else:
-                    self.effectprior[self.tokens[effect]] += freq
 
-                self.effectdict.setdefault(effect,{})
-                self.effectdict[effect][cause] = freq
+                else:
+                    self.effectprior[effecttokens[effect]] += freq
+
+                #self.effectdict.setdefault(effect,{})
+                #self.effectdict[effect][cause] = freq
 
                 tot += freq
-                for i in range(freq): self.dataidxs.append(curIdx)
-                self.idxpairmap[curIdx] = [causeId,effectId]
-                #idxOfpairf.write(str(curIdx) + ' ' + str(causeId) + ',' + str(effectId) + '\n')
                 curIdx += 1 # line number is the pair number
 
             tot = float(tot)
+            # combine tokens
+            self.effect_offset = len(causetokens)
+            for k in effecttokens.keys(): effecttokens[k] += self.effect_offset
+            self.tokens = causetokens.update(effecttokens)
+
+            # combine idwordlist
+            self.idwordlist = causewords + effectwords
+
             for cause in self.causedict.keys():
                 causetot = self.causeprior[self.tokens[cause]]
                 for effect in self.causedict[cause]:
@@ -148,37 +144,14 @@ class Causal(object):
             pickle.dump(self.causedict, causedictf)
             pickle.dump(self.effectdict, effectdictf)
 
-            pickle.dump(self.idxpairmap, idxOfpairf)
-            pickle.dump(self.idwordlist, idwordlistf)
-
-            random.shuffle(self.dataidxs)
-            pickle.dump(self.dataidxs, dataf)
-
-    def transform_data(self,pairidxs,causality): # pairidxs: a list of pairidx
-        # transform context/outside word as input
-        # transform target/center word as label
-        batch_size = len(pairidxs)
-        volcab_size = len(self.idwordlist)
-        input_data = np.zeros([batch_size, self.volcab_size]) # N x V
-        label_data = np.zeros([batch_size, self.volcab_size]) # N x V
-
-        contextIdx, targetIdx = 0, 1 # cause word as context, effect word as target, w_e | w_c, sufficiency causality
-        if causality=='nec': contextIdx, targetIdx = targetIdx, contextIdx
-
-        for i in xrange(batch_size):
-            context_word_id = self.idxpairmap[pairidxs[i]][contextIdx]
-            target_word_id = self.idxpairmap[pairidxs[i]][targetIdx]
-            input_data[i,context_word_id] = 1.0
-            label_data[i,target_word_id] = 1.0
-
-        return (input_data, label_data)
 
     def getRandomContext(self, lambd=0.5, C=5):
 
         # sample a cause or effect word as center word
         center = np.random.choice(np.array(["cause","effect"]), [1 - lambd, lambd])
+        offset = getattr(self, cneter+"_offset")
         center_prior = getattr(self, center+"prior")
-        centerWord = self.tokens[np.random.choice(np.arange(0,len(center_prior)), center_prior)]
+        centerWord = self.idwordlist[np.random.choice(np.arange(0, len(center_prior)), center_prior) + offset]
         context_distribution = getattr(self, center+"dict")[centerWord]
 
         context_candidates, context_prior = zip(*context_distribution.items())
@@ -209,9 +182,8 @@ def main():
     config.read(configPath)
 
     for section in config.sections():
-        if section=="CS_0.5": continue
         print("datasets:",section)
-        #processor = Causal(configPath, section)
+        processor = Causal(configPath, section)
 
 
 
