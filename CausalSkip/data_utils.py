@@ -139,7 +139,7 @@ class Causal(object):
                 for effect in self.causedict[cause]:
                     self.causedict[cause][effect] /= causetot
             for effect in self.effectdict.keys():
-                effecttot = self.effectprior[self.tokens[effect] - self.effectoffset]
+                effecttot = self.effectprior[self.tokens[effect] - self.effect_offset]
                 for cause in self.effectdict[effect]:
                     self.effectdict[effect][cause] /= effecttot
             pickle.dump(self.causedict, causedictf)
