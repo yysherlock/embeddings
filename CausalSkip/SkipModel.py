@@ -143,6 +143,9 @@ def test_model():
     configPath = 'bi-config.ini'
     config.read(configPath)
 
+    random.seed(31415)
+    np.random.seed(9265)
+    
     dataset = Causal(configPath, section)
     dimVectors = 10
 
@@ -151,5 +154,5 @@ def test_model():
 
     wordVectors = np.concatenate(((np.random.rand(causenWords, dimVectors) - .5) / \
         dimVectors, np.zeros((effectnWords, dimVectors))), axis=0)
-        
+
     gradcheck_naive(lambda vec: word2vec_sgd_wrapper(skipgram, vec, dataset, 5, negSamplingCostAndGradient), wordVectors)
