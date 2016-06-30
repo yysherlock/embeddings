@@ -15,8 +15,8 @@ for section in config.sections():
     if not section=="CausalNet": continue
 
     dataset = Causal(configPath, section)
-    causenWords = len(dataset.cause_prior)
-    effectnWords = len(dataset.effect_prior)
+    causenWords = len(dataset.causeprior)
+    effectnWords = len(dataset.effectprior)
 
     datasets_dir = config.get(section, "datasets_dir")
 
@@ -33,5 +33,5 @@ for section in config.sections():
         wordVectors0 = sgd(
             lambda vec: word2vec_sgd_wrapper(skipgram, tokens, vec, dataset, C,
             	negSamplingCostAndGradient),
-            wordVectors, 0.3, 100000, None, True, PRINT_EVERY=100)
+            wordVectors, params_dir, 0.3, 100000, None, True, PRINT_EVERY=100)
         print("sanity check: cost at convergence should be around or below 10")
