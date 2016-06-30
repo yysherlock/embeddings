@@ -55,7 +55,7 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset, target
     return cost, gradPred, grad
 
 
-def cskipgram(currentWord, C, contextWords, inputVectors, outputVectors,
+def cskipgram(center_type, target_type, currentWord, C, contextWords, inputVectors, outputVectors,
     dataset, word2vecCostAndGradient = negSamplingCostAndGradient):
     """ Skip-gram model in word2vec """
 
@@ -86,15 +86,8 @@ def cskipgram(currentWord, C, contextWords, inputVectors, outputVectors,
     iW,D = inputVectors.shape
     oW,D = outputVectors.shape
 
-    center_type = currentWord.split('_')[1]
-    target_type = 'c'
-    if center_type == 'c':
-        inoffset = dataset.cause_offset
-        outoffset = dataset.effect_offset
-        target_type = 'e'
-    else:
-        inoffset = dataset.effect_offset
-        outoffset = dataset.cause_offset
+    inoffset = getattr(dataset, center_type+'_offset')
+    outoffset = getattr(dataset, target_type+'_offset')
 
     cost = 0.0
     gradIn = np.zeros((iW,D))
@@ -121,12 +114,14 @@ def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAnd
 
     for i in xrange(batchsize):
         C1 = random.randint(1,C)
-        centerword, context = dataset.getRandomContext(C1)
+        center_type, centerword, context = dataset.getRandomContext(C1)
 
-        if centerword.split('_')[1]=='c':
+        if center_type == "cause":
+            target_type = "effect"
             inputVectors = causeVectors
             outputVectors = effectVectors
         else:
+            target_type = "cause"
             inputVectors = effectVectors
             outputVectors = causeVectors
 
@@ -135,9 +130,9 @@ def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAnd
         else:
             denom = 1
 
-        c, gin, gout = word2vecModel(centerword, C1, context, inputVectors, outputVectors, dataset, word2vecCostAndGradient)
+        c, gin, gout = word2vecModel(center_type, target_type, centerword, C1, context, inputVectors, outputVectors, dataset, word2vecCostAndGradient)
         cost += c / batchsize / denom
-        
+
         M = inputVectors.shape[0]
         grad[:M, :] += gin / batchsize / denom
         grad[M:, :] += gout / batchsize / denom
