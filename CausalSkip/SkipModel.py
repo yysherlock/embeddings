@@ -33,7 +33,7 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset, target
 
     UK = np.zeros((K+1, D))
     indices = [target]
-    tablesize = W
+    
     for i in xrange(K):
         k = dataset.sampleTokenIdx(target_type)
         while k == target:
@@ -115,15 +115,13 @@ def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAnd
 
     for i in xrange(batchsize):
         C1 = random.randint(1,C)
-        center_type, centerword, context = dataset.getRandomContext(C1)
+        center_type, target_type, centerword, context = dataset.getRandomContext(C1)
         print("center_type:", center_type)
-        
-        if center_type == "cause":
-            target_type = "effect"
+
+        if center_type == "cause" and target_type == "effect":
             inputVectors = causeVectors
             outputVectors = effectVectors
-        else:
-            target_type = "cause"
+        if center_type == "effect" and target_type == "cause":
             inputVectors = effectVectors
             outputVectors = causeVectors
 
@@ -135,10 +133,11 @@ def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAnd
         c, gin, gout = word2vecModel(center_type, target_type, centerword, C1, context, inputVectors, outputVectors, dataset, word2vecCostAndGradient)
         cost += c / batchsize / denom
 
-        if center_type == "cause":
+        if center_type == "cause" and target_type == "effect":
             grad[:N, :] += gin / batchsize / denom
             grad[N:, :] += gout / batchsize / denom
-        else:
+
+        if center_type == "effect" and target_type == "cause":
             grad[:N, :] += gout / batchsize / denom
             grad[N:, :] += gin / batchsize / denom
 
