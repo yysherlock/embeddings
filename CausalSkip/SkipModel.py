@@ -109,6 +109,7 @@ def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAnd
     cost = 0.0
     grad = np.zeros(wordVectors.shape)
     N = len(dataset.causeprior)
+    
     causeVectors = wordVectors[:N,:]
     effectVectors = wordVectors[N:,:]
 
@@ -133,9 +134,12 @@ def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAnd
         c, gin, gout = word2vecModel(center_type, target_type, centerword, C1, context, inputVectors, outputVectors, dataset, word2vecCostAndGradient)
         cost += c / batchsize / denom
 
-        M = inputVectors.shape[0]
-        grad[:M, :] += gin / batchsize / denom
-        grad[M:, :] += gout / batchsize / denom
+        if center_type == "cause":
+            grad[:N, :] += gin / batchsize / denom
+            grad[N:, :] += gout / batchsize / denom
+        else:
+            grad[:N, :] += gout / batchsize / denom
+            grad[N:, :] += gin / batchsize / denom
 
     return cost, grad
 
@@ -145,11 +149,11 @@ def test_model():
     configPath = 'bi-config.ini'
     config.read(configPath)
 
-    random.seed(31415)
-    np.random.seed(9265)
-
     dataset = Causal(configPath, "CausalNet")
     dimVectors = 10
+
+    random.seed(31415)
+    np.random.seed(9265)
 
     causenWords = len(dataset.causeprior)
     effectnWords = len(dataset.effectprior)
