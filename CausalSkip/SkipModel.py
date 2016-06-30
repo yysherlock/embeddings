@@ -109,14 +109,15 @@ def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAnd
     cost = 0.0
     grad = np.zeros(wordVectors.shape)
     N = len(dataset.causeprior)
-    
+
     causeVectors = wordVectors[:N,:]
     effectVectors = wordVectors[N:,:]
 
     for i in xrange(batchsize):
         C1 = random.randint(1,C)
         center_type, centerword, context = dataset.getRandomContext(C1)
-
+        print("center_type:", center_type)
+        
         if center_type == "cause":
             target_type = "effect"
             inputVectors = causeVectors
