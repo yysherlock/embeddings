@@ -58,6 +58,7 @@ def gradcheck_naive(f, x):
         numgrad = (fx1 - fx2) / (2*h)
         x[ix] += h
 
+        print("cost:",fx, 'cost(w-h):',fx1, 'cost(w+h):', fx2)
         # Compare gradients
         reldiff = abs(numgrad - grad[ix]) / max(1, abs(numgrad), abs(grad[ix]))
         if reldiff > 1e-5:
