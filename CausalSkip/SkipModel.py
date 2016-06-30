@@ -33,7 +33,7 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset, target
 
     UK = np.zeros((K+1, D))
     indices = [target]
-    
+
     for i in xrange(K):
         k = dataset.sampleTokenIdx(target_type)
         while k == target:
@@ -105,7 +105,7 @@ def cskipgram(center_type, target_type, currentWord, C, contextWords, inputVecto
     return cost, gradIn, gradOut
 
 def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAndGradient = negSamplingCostAndGradient):
-    batchsize = 50
+    batchsize = 1 #50
     cost = 0.0
     grad = np.zeros(wordVectors.shape)
     N = len(dataset.causeprior)
