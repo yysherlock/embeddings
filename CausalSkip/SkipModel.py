@@ -137,8 +137,8 @@ def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAnd
 
         c, gin, gout = word2vecModel(centerword, C1, context, inputVectors, outputVectors, dataset, word2vecCostAndGradient)
         cost += c / batchsize / denom
-        grad[:N/2, :] += gin / batchsize / denom
-        grad[N/2:, :] += gout / batchsize / denom
+        grad[:N, :] += gin / batchsize / denom
+        grad[N:, :] += gout / batchsize / denom
 
     return cost, grad
 
