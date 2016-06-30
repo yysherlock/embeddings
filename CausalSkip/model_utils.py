@@ -46,7 +46,7 @@ def gradcheck_naive(f, x):
     it = np.nditer(x, flags=['multi_index'], op_flags=['readwrite'])
 
     while not it.finished:
-        print("---per check--")
+        #print("---per check--")
         ix = it.multi_index
 
         ### try modifying x[ix] with h defined above to compute numerical gradients
@@ -68,7 +68,7 @@ def gradcheck_naive(f, x):
         numgrad = (fx1 - fx2) / (2*h)
         x[ix] += h
 
-        print("cost:",fx, 'cost(w-h):',fx1, 'cost(w+h):', fx2)
+        #print("cost:",fx, 'cost(w-h):',fx1, 'cost(w+h):', fx2)
         # Compare gradients
         reldiff = abs(numgrad - grad[ix]) / max(1, abs(numgrad), abs(grad[ix]))
         if reldiff > 1e-5:

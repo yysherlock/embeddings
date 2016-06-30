@@ -161,8 +161,6 @@ class Causal(object):
 
     def getRandomContext(self, C=5, lambd=0.5):
 
-        #random.seed(31415)
-        #np.random.seed(2727)
         # sample a cause or effect word as center word
         center_type = np.random.choice(np.array(["cause","effect"]), p=[1.0 - lambd, lambd])
         if center_type=="cause": target_type = "effect"
