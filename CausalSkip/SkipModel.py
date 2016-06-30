@@ -83,8 +83,8 @@ def cskipgram(currentWord, C, contextWords, inputVectors, outputVectors,
 
     tokens = dataset.tokens
 
-    iW,iD = inputVectors.shape
-    oW,oD = outputVectors.shape
+    iW,D = inputVectors.shape
+    oW,D = outputVectors.shape
 
     center_type = currentWord.split('_')[1]
     target_type = 'c'
@@ -97,8 +97,8 @@ def cskipgram(currentWord, C, contextWords, inputVectors, outputVectors,
         outoffset = dataset.cause_offset
 
     cost = 0.0
-    gradIn = np.zeros((iW,iD))
-    gradOut = np.zeros((oW,oD))
+    gradIn = np.zeros((iW,D))
+    gradOut = np.zeros((oW,D))
     center = tokens[currentWord] - inoffset
     predicted = inputVectors[center]
 
@@ -137,8 +137,10 @@ def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAnd
 
         c, gin, gout = word2vecModel(centerword, C1, context, inputVectors, outputVectors, dataset, word2vecCostAndGradient)
         cost += c / batchsize / denom
-        grad[:N, :] += gin / batchsize / denom
-        grad[N:, :] += gout / batchsize / denom
+        
+        M = inputVectors.shape[0]
+        grad[:M, :] += gin / batchsize / denom
+        grad[M:, :] += gout / batchsize / denom
 
     return cost, grad
 
