@@ -34,4 +34,4 @@ for section in config.sections():
             lambda vec: word2vec_sgd_wrapper(skipgram, tokens, vec, dataset, C,
             	negSamplingCostAndGradient),
             wordVectors, 0.3, 100000, None, True, PRINT_EVERY=100)
-        print "sanity check: cost at convergence should be around or below 10"
+        print("sanity check: cost at convergence should be around or below 10")
