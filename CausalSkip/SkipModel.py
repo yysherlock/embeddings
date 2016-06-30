@@ -152,11 +152,11 @@ def test_model():
     dataset = Causal(configPath, "CausalNet")
     dimVectors = 10
 
-    random.seed(31415)
-    np.random.seed(9265)
-
     causenWords = len(dataset.causeprior)
     effectnWords = len(dataset.effectprior)
+
+    random.seed(31415)
+    np.random.seed(9265)
 
     wordVectors = np.concatenate(((np.random.rand(causenWords, dimVectors) - .5) / \
         dimVectors, np.zeros((effectnWords, dimVectors))), axis=0)
