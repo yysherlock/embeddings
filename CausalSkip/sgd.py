@@ -1,5 +1,5 @@
 # Save parameters every a few SGD iterations as fail-safe
-SAVE_PARAMS_EVERY = 1000
+SAVE_PARAMS_EVERY = 200
 
 import glob
 import random
@@ -17,7 +17,7 @@ def load_saved_params():
             st = iter
 
     if st > 0:
-        with open("saved_params_%d.npy" % st, "r") as f:
+        with open("saved_params_%d.npy" % st, "rb") as f:
             params = pickle.load(f)
             state = pickle.load(f)
         return st, params, state
@@ -25,7 +25,7 @@ def load_saved_params():
         return st, None, None
 
 def save_params(iter, params, params_dir):
-    with open(params_dir+"/saved_params_%d.npy" % iter, "w") as f:
+    with open(params_dir+"/saved_params_%d.npy" % iter, "wb") as f:
         pickle.dump(params, f)
         pickle.dump(random.getstate(), f)
 
