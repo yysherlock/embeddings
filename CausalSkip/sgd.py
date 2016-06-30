@@ -1,5 +1,5 @@
 # Save parameters every a few SGD iterations as fail-safe
-SAVE_PARAMS_EVERY = 200
+SAVE_PARAMS_EVERY = 1000
 
 import glob
 import random
@@ -8,10 +8,10 @@ import os.path as op
 from six.moves import xrange
 import pickle
 
-def load_saved_params():
+def load_saved_params(params_dir):
     """ A helper function that loads previously saved parameters and resets iteration start """
     st = 0
-    for f in glob.glob("saved_params_*.npy"):
+    for f in glob.glob(params_dir+"/saved_params_*.npy"):
         iter = int(op.splitext(op.basename(f))[0].split("_")[2])
         if (iter > st):
             st = iter
@@ -20,16 +20,19 @@ def load_saved_params():
         with open("saved_params_%d.npy" % st, "rb") as f:
             params = pickle.load(f)
             state = pickle.load(f)
-        return st, params, state
+            cnWords = pickle.load(f)
+        return st, params, state, cnWords
     else:
         return st, None, None
 
-def save_params(iter, params, params_dir):
+def save_params(iter, params, params_dir, cnWords):
     with open(params_dir+"/saved_params_%d.npy" % iter, "wb") as f:
         pickle.dump(params, f)
         pickle.dump(random.getstate(), f)
+        pickle.dump(cnWords,f)
 
-def sgd(f, x0, params_dir, step, iterations, postprocessing = None, useSaved = False, PRINT_EVERY=10):
+
+def sgd(f, x0, params_dir, step, iterations, cnWords, postprocessing = None, useSaved = False, PRINT_EVERY=10):
     """ Stochastic Gradient Descent """
     # Implement the stochastic gradient descent method in this
     # function.
@@ -87,7 +90,7 @@ def sgd(f, x0, params_dir, step, iterations, postprocessing = None, useSaved = F
             print("iter %d: %f" % (iter, expcost))
 
         if iter % SAVE_PARAMS_EVERY == 0 and useSaved:
-            save_params(iter, x, params_dir)
+            save_params(iter, x, params_dir, cnWords)
 
         if iter % ANNEAL_EVERY == 0:
             step *= 0.5

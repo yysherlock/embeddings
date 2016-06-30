@@ -33,5 +33,5 @@ for section in config.sections():
         wordVectors0 = sgd(
             lambda vec: word2vec_sgd_wrapper(cskipgram, vec, dataset, C,
             	negSamplingCostAndGradient),
-            wordVectors, params_dir, 0.3, 100000, None, True, PRINT_EVERY=100)
+            wordVectors, params_dir, 0.3, 100000, causenWords, None, True, PRINT_EVERY=100)
         print("sanity check: cost at convergence should be around or below 10")
