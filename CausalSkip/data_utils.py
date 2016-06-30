@@ -163,9 +163,9 @@ class Causal(object):
 
         # sample a cause or effect word as center word
         center = np.random.choice(np.array(["cause","effect"]), p=[1.0 - lambd, lambd])
-        offset = getattr(self, cneter+"_offset")
+        offset = getattr(self, center+"_offset")
         center_prior = getattr(self, center+"prior")
-        centerWord = self.idwordlist[np.random.choice(np.arange(0, len(center_prior)), center_prior) + offset]
+        centerWord = self.idwordlist[np.random.choice(np.arange(0, len(center_prior)), p=center_prior) + offset]
         context_distribution = getattr(self, center+"dict")[centerWord]
 
         context_candidates, context_prior = zip(*context_distribution.items())
@@ -178,9 +178,12 @@ class Causal(object):
         else:
             return self.getRandomContext(C)
 
-    def sampleTokenIdx(self, tablesize):
-        return self.sampleTable()[random.randint(0, tablesize - 1)]
+    def sampleTokenIdx(self, target_type):
+        if target_type == 'c':
+            prior = self.causeprior
+        else: prior = self.effectprior
 
+        return np.random.choice(np.arange(0,len(prior)), p=prior)
 
 class TestCausalNet(unittest.TestCase):
 

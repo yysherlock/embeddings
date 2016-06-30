@@ -12,7 +12,7 @@ def normalizeRows(x):
     x = x.T
     return x
 
-def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
+def negSamplingCostAndGradient(predicted, target, outputVectors, dataset, target_type,
     K=10):
     """ Negative sampling cost function for word2vec models """
 
@@ -35,9 +35,9 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
     indices = [target]
     tablesize = W
     for i in xrange(K):
-        k = dataset.sampleTokenIdx()
+        k = dataset.sampleTokenIdx(target_type)
         while k == target:
-            k = dataset.sampleTokenIdx()
+            k = dataset.sampleTokenIdx(target_type)
         indices.append(k)
     for i,ix in enumerate(indices):
         UK[i] = outputVectors[ix]
@@ -86,9 +86,12 @@ def cskipgram(currentWord, C, contextWords, inputVectors, outputVectors,
     iW,iD = inputVectors.shape
     oW,oD = outputVectors.shape
 
-    if currentWord.split('-')[1]=='c':
+    center_type = currentWord.split('_')[1]
+    target_type = 'c'
+    if center_type == 'c':
         inoffset = dataset.cause_offset
         outoffset = dataset.effect_offset
+        target_type = 'e'
     else:
         inoffset = dataset.effect_offset
         outoffset = dataset.cause_offset
@@ -96,12 +99,12 @@ def cskipgram(currentWord, C, contextWords, inputVectors, outputVectors,
     cost = 0.0
     gradIn = np.zeros((iW,iD))
     gradOut = np.zeros((oW,oD))
-    center = tokens[currentWord - inoffset]
-    predicted = inputVectors[center - inoffset]
+    center = tokens[currentWord] - inoffset
+    predicted = inputVectors[center]
 
     for i,contextWord in enumerate(contextWords):
         target = tokens[contextWord] - outoffset
-        inc_cost, inc_gradPred, inc_gradOut = word2vecCostAndGradient(predicted, target, outputVectors, dataset)
+        inc_cost, inc_gradPred, inc_gradOut = word2vecCostAndGradient(predicted, target, outputVectors, dataset, target_type)
         cost += inc_cost
         gradIn[center] += inc_gradPred
         gradOut += inc_gradOut
@@ -120,7 +123,7 @@ def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAnd
         C1 = random.randint(1,C)
         centerword, context = dataset.getRandomContext(C1)
 
-        if centerword.split('-')[1]=='c':
+        if centerword.split('_')[1]=='c':
             inputVectors = causeVectors
             outputVectors = effectVectors
         else:
