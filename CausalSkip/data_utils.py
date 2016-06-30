@@ -163,6 +163,9 @@ class Causal(object):
 
         # sample a cause or effect word as center word
         center_type = np.random.choice(np.array(["cause","effect"]), p=[1.0 - lambd, lambd])
+        if center_type=="cause": target_type = "effect"
+        else: target_type = "cause"
+
         offset = getattr(self, center_type+"_offset")
         center_prior = getattr(self, center_type+"prior")
         centerWord = self.idwordlist[np.random.choice(np.arange(0, len(center_prior)), p=center_prior) + offset]
@@ -174,7 +177,7 @@ class Causal(object):
         context = np.random.choice(context_candidates, size = 2*C, p = context_prior)
 
         if len(context) > 0:
-            return center_type, centerWord, context
+            return center_type, target_type, centerWord, context
         else:
             return self.getRandomContext(C)
 
