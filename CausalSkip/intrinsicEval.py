@@ -1,9 +1,11 @@
 import numpy as np
+import configparser
+import pickle
 import matplotlib.pyplot as pyplot
 import glob
 from sgd import load_saved_params, sgd
 
-def loadObj(self, filename):
+def loadObj(filename):
     with open(filename,'rb') as f:
         obj = pickle.load(f)
     return obj
@@ -16,10 +18,14 @@ for section in config.sections():
     if not section=="CausalNet": continue
     datasets_dir = config.get(section, "datasets_dir")
     tokens = loadObj(config.get(section, "tokens"))
-    wordlist = loadObj(config.get(section, "wordlist"))
+    wordlist = loadObj(config.get(section, "id2word_list"))
+    causeprior = loadObj(config.get(section, "cause_prior"))
+
+    N = len(causeprior)
+    
     for f in glob.glob(datasets_dir+"/dim=*"):
         # Load the causal vectors we trained earlier
-        _, wordVectors, _, N = load_saved_params(f)
+        _, wordVectors, _ = load_saved_params(f)
         causeVectors, effectVectors = wordVectors[:N,:], wordVectors[N:,:]
 
         #visualizeWords = ['kill_c','guilty_e','happy_e', 'gift_c', 'fire_c',

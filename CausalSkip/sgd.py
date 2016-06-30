@@ -17,22 +17,21 @@ def load_saved_params(params_dir):
             st = iter
 
     if st > 0:
-        with open("saved_params_%d.npy" % st, "rb") as f:
+        with open(params_dir+"/saved_params_%d.npy" % st, "rb") as f:
             params = pickle.load(f)
             state = pickle.load(f)
             cnWords = pickle.load(f)
-        return st, params, state, cnWords
+        return st, params, state
     else:
         return st, None, None
 
-def save_params(iter, params, params_dir, cnWords):
+def save_params(iter, params, params_dir):
     with open(params_dir+"/saved_params_%d.npy" % iter, "wb") as f:
         pickle.dump(params, f)
         pickle.dump(random.getstate(), f)
-        pickle.dump(cnWords,f)
 
 
-def sgd(f, x0, params_dir, step, iterations, cnWords, postprocessing = None, useSaved = False, PRINT_EVERY=10):
+def sgd(f, x0, params_dir, step, iterations, postprocessing = None, useSaved = False, PRINT_EVERY=10):
     """ Stochastic Gradient Descent """
     # Implement the stochastic gradient descent method in this
     # function.
@@ -90,7 +89,7 @@ def sgd(f, x0, params_dir, step, iterations, cnWords, postprocessing = None, use
             print("iter %d: %f" % (iter, expcost))
 
         if iter % SAVE_PARAMS_EVERY == 0 and useSaved:
-            save_params(iter, x, params_dir, cnWords)
+            save_params(iter, x, params_dir)
 
         if iter % ANNEAL_EVERY == 0:
             step *= 0.5
