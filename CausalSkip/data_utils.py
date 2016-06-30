@@ -156,9 +156,6 @@ class Causal(object):
             pickle.dump(self.causeprior, causepriorf)
             pickle.dump(self.effectprior, effectpriorf)
 
-
-
-
     def getRandomContext(self, C=5, lambd=0.5):
 
         # sample a cause or effect word as center word
@@ -185,15 +182,6 @@ class Causal(object):
         prior = getattr(self,target_type+'prior')
         return np.random.choice(np.arange(0,len(prior)), p=prior)
 
-class TestCausalNet(unittest.TestCase):
-
-    def setUp(self):
-        #self.processor = Processor('bi-config.ini','DEBUG')
-        self.processor = Processor('bi-config.ini', 'COPA')
-    def test_loadData(self):
-        obj = self.processor
-        self.assertEqual(obj.loadedOrNot(), True)
-
 
 def main():
     # generate datasets for each corpus
@@ -209,5 +197,4 @@ def main():
 
 
 if __name__ == "__main__":
-    #unittest.main()
     main()

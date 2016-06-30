@@ -1,13 +1,10 @@
+import os
 import random
 import numpy as np
 import configparser
 from data_utils import *
 from SkipModel import *
 from sgd import *
-
-"""
-Causal embeddings training
-"""
 
 random.seed(314)
 config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
@@ -16,13 +13,18 @@ config.read(configPath)
 
 for section in config.sections():
     if not section=="CausalNet": continue
+
     dataset = Causal(configPath, section)
     causenWords = len(dataset.cause_prior)
     effectnWords = len(dataset.effect_prior)
+
+    datasets_dir = config.get(section, "datasets_dir")
+
     for dimVectors in [100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000]:
         # context size
         C = 5
-
+        params_dir = datasets_dir + "/dim=" + str(dimVectors)
+        if not os.path.exists(params_dir): os.system("mkdir " + params_dir)
         # Reset the random seed to make sure that everyone gets the same results
         random.seed(31415)
         np.random.seed(9265)
@@ -31,5 +33,5 @@ for section in config.sections():
         wordVectors0 = sgd(
             lambda vec: word2vec_sgd_wrapper(skipgram, tokens, vec, dataset, C,
             	negSamplingCostAndGradient),
-            wordVectors, 0.3, 1000, None, True, PRINT_EVERY=10)
+            wordVectors, 0.3, 100000, None, True, PRINT_EVERY=100)
         print "sanity check: cost at convergence should be around or below 10"
