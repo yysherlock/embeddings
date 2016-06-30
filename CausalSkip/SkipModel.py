@@ -116,7 +116,7 @@ def word2vec_sgd_wrapper(word2vecModel, wordVectors, dataset, C, word2vecCostAnd
     for i in xrange(batchsize):
         C1 = random.randint(1,C)
         center_type, target_type, centerword, context = dataset.getRandomContext(C1)
-        print("center_type:", center_type,"centerword:", centerword, "context:", context)
+        #print("center_type:", center_type,"centerword:", centerword, "context:", context)
 
         if center_type == "cause" and target_type == "effect":
             inputVectors = causeVectors
