@@ -1,7 +1,10 @@
+#import matplotlib
+#matplotlib.use('Agg')
 import numpy as np
 import configparser
 import pickle
-import matplotlib.pyplot as pyplot
+import matplotlib.pyplot as plt
+from six.moves import xrange
 import glob
 from sgd import load_saved_params, sgd
 
@@ -22,7 +25,7 @@ for section in config.sections():
     causeprior = loadObj(config.get(section, "cause_prior"))
 
     N = len(causeprior)
-    
+
     for f in glob.glob(datasets_dir+"/dim=*"):
         # Load the causal vectors we trained earlier
         _, wordVectors, _ = load_saved_params(f)

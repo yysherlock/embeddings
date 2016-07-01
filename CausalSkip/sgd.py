@@ -20,7 +20,6 @@ def load_saved_params(params_dir):
         with open(params_dir+"/saved_params_%d.npy" % st, "rb") as f:
             params = pickle.load(f)
             state = pickle.load(f)
-            cnWords = pickle.load(f)
         return st, params, state
     else:
         return st, None, None
@@ -55,7 +54,7 @@ def sgd(f, x0, params_dir, step, iterations, postprocessing = None, useSaved = F
     ANNEAL_EVERY = 20000
 
     if useSaved:
-        start_iter, oldx, state = load_saved_params()
+        start_iter, oldx, state = load_saved_params(params_dir)
         if start_iter > 0:
             x0 = oldx;
             step *= 0.5 ** (start_iter / ANNEAL_EVERY)
