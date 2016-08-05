@@ -7,12 +7,29 @@ import pickle
 import matplotlib.pyplot as plt
 from six.moves import xrange
 import glob
-from sgd import load_saved_params, sgd
 
 def loadObj(filename):
     with open(filename,'rb') as f:
         obj = pickle.load(f)
     return obj
+
+def load_saved_params(params_dir,iteration=None):
+    """ A helper function that loads previously saved parameters and resets iteration start """
+    st = 0
+    if not iteration:
+        for f in glob.glob(params_dir+"/saved_params_*.npy"):
+            iter = int(op.splitext(op.basename(f))[0].split("_")[2])
+            if (iter > st):
+                st = iter
+    else: st = iteration
+
+    if st > 0:
+        with open(params_dir+"/saved_params_%d.npy" % st, "rb") as f:
+            params = pickle.load(f)
+            state = pickle.load(f)
+        return st, params, state
+    else:
+        return st, None, None
 
 config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
 configPath = 'bi-config.ini'
@@ -27,11 +44,11 @@ for section in config.sections():
 
     N = len(causeprior)
 
-    for f in glob.glob(datasets_dir+"/GloveInit/dim=*"):
+    for f in glob.glob(datasets_dir+"/dim=*"):
         # Load the causal vectors we trained earlier
+        if '300' not in f: continue
         if not os.listdir(f): continue
-        print(f)
-        _, wordVectors, _, _ = load_saved_params(f)
+        _, wordVectors, _ = load_saved_params(f, 9000)
         causeVectors, effectVectors = wordVectors[:N,:], wordVectors[N:,:]
 
         visualizeWords = ['kill_c','guilty_e','happy_e', 'gift_c', 'fire_c',

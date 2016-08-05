@@ -12,7 +12,7 @@ configPath = 'bi-config.ini'
 config.read(configPath)
 
 for section in config.sections():
-    if not section=="CausalNet": continue
+    if not section=="COPA": continue
 
     dataset = Causal(configPath, section)
     causenWords = len(dataset.causeprior)

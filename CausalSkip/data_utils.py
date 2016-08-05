@@ -21,7 +21,6 @@ class Causal(object):
         self.effectpriorfn = self.config.get(sectionflag, 'effect_prior')
         self.causedictfn = self.config.get(sectionflag, 'cause_dict') # {cause1:{effect1:p1,effect2:p2,...}, ...}
         self.effectdictfn = self.config.get(sectionflag, 'effect_dict')
-        self.tokensfn = self.config.get(sectionflag, 'tokens')
 
         self.idwordlist = [] # [word1, word2, ...]
         self.tokens = {} # {w1:idx1, w2:idx2, ...}

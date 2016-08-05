@@ -1,6 +1,24 @@
 import numpy as np
 import random
 
+def load_specified_saved_params(params_dir,iteration=None):
+    """ A helper function that loads previously saved parameters and resets iteration start """
+    st = 0
+    if not iteration:
+        for f in glob.glob(params_dir+"/saved_params_*.npy"):
+            iter = int(op.splitext(op.basename(f))[0].split("_")[2])
+            if (iter > st):
+                st = iter
+    else: st = iteration
+
+    if st > 0:
+        with open(params_dir+"/saved_params_%d.npy" % st, "rb") as f:
+            params = pickle.load(f)
+            state = pickle.load(f)
+        return st, params, state
+    else:
+        return st, None, None
+
 def softmax(x):
     """
     Compute the softmax function for each row of the input x.

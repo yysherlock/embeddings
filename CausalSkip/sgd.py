@@ -20,15 +20,16 @@ def load_saved_params(params_dir):
         with open(params_dir+"/saved_params_%d.npy" % st, "rb") as f:
             params = pickle.load(f)
             state = pickle.load(f)
-        return st, params, state
+            npstate = pickle.load(f)
+        return st, params, state, npstate
     else:
-        return st, None, None
+        return st, None, None, None
 
 def save_params(iter, params, params_dir):
     with open(params_dir+"/saved_params_%d.npy" % iter, "wb") as f:
         pickle.dump(params, f)
         pickle.dump(random.getstate(), f)
-
+        pickle.dump(np.random.get_state(),f)
 
 def sgd(f, x0, params_dir, step, iterations, postprocessing = None, useSaved = False, PRINT_EVERY=10):
     """ Stochastic Gradient Descent """
@@ -54,13 +55,14 @@ def sgd(f, x0, params_dir, step, iterations, postprocessing = None, useSaved = F
     ANNEAL_EVERY = 20000
 
     if useSaved:
-        start_iter, oldx, state = load_saved_params(params_dir)
+        start_iter, oldx, state, npstate = load_saved_params(params_dir)
         if start_iter > 0:
             x0 = oldx;
             step *= 0.5 ** (start_iter / ANNEAL_EVERY)
 
         if state:
             random.setstate(state)
+            np.random.set_state(npstate)
     else:
         start_iter = 0
 
